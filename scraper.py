@@ -1,7 +1,10 @@
+import os
+import json
+import smtplib 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By 
-import pandas as pd 
+#import pandas as pd 
 YOUTUBE_TRENDING_URL='https://www.youtube.com/feed/trending'
 
 def get_driver():
@@ -33,6 +36,32 @@ def parse_video(video):
   description = video.find_element(By.ID, 'description-text').text
   return {'title': title, 'url': url, 'thumbnail_url': thumbnail_url, 'channel': channel_name, 'description': description}
 
+def send_email(body):  
+  try:
+    server_ssl = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server_ssl.ehlo()
+
+    SENDER_EMAIL = 'sanjaynycws11@gmail.com'
+    RECEIVER_EMAIL = 'sanjaynycws@gmail.com'
+    SENDER_PASSWORD = os.environ['GMAIL_PASSWORD']
+    
+    subject = 'YouTube Trending Videos'
+    
+    
+    email_text = """\
+    From: {SENDER_EMAIL}
+    To: {RECEIVER_EMAIL}
+    Subject: {subject}
+    
+    {body}
+    """
+
+    server_ssl.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server_ssl.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, email_text)
+    server_ssl.close()
+
+  except:
+    print('Something went wrong...')
     
 if __name__ == "__main__":
   print('Creating driver')
@@ -49,9 +78,13 @@ if __name__ == "__main__":
   # title, url, thumbnail_url, channel, views, uploaded,           description
   #video = videos[0]
   print('Save the data to a CSV')
-  videos_df = pd.DataFrame(videos_data)
-  print(videos_df)
-  videos_df.to_csv('trending.csv')
+  #videos_df = pd.DataFrame(videos_data)
+  #print(videos_df)
+  #videos_df.to_csv('trending.csv', index=None)
+  print("Send the results over email")
+  body = json.dumps(videos_data, indent=2)
+  send_email(body)
+  print('finished')
   
   
   #print('Title:', title)
